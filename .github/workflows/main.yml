@@ -1,0 +1,44 @@
+
+name: Compilar MonedasCraft
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'MonedasCraft-Proyecto.zip'
+      - '.github/workflows/compilar.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Instalar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Extraer proyecto
+        run: |
+          unzip MonedasCraft-Proyecto.zip -d proyecto
+          find proyecto -name build.gradle -print
+
+      - name: Compilar plugin
+        run: |
+          BUILD_FILE=$(find proyecto -name build.gradle | head -n 1)
+          test -n "$BUILD_FILE"
+          gradle -p "$(dirname "$BUILD_FILE")" build
+
+      - name: Publicar JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: MonedasCraft-JAR
+          path: proyecto/**/build/libs/*.jar
